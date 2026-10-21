@@ -74,6 +74,14 @@ jobs:
           keys:
             - maven-deps-{{ checksum "pom.xml" }}
             - maven-deps-
+      - run:
+          name: Verify Snyk token is available
+          command: |
+            if [ -z "${SNYK_TOKEN:-}" ]; then
+              echo "ERROR: SNYK_TOKEN is unset or empty in this job." >&2
+              exit 1
+            fi
+            echo "SNYK_TOKEN is present."
       - snyk/scan:
           severity-threshold: high
           cli-version: 1.1308.1
@@ -87,6 +95,14 @@ jobs:
       - image: cimg/openjdk:21.0
     steps:
       - checkout
+      - run:
+          name: Verify Snyk token is available
+          command: |
+            if [ -z "${SNYK_TOKEN:-}" ]; then
+              echo "ERROR: SNYK_TOKEN is unset or empty in this job." >&2
+              exit 1
+            fi
+            echo "SNYK_TOKEN is present."      
       - snyk/scan:
           command: code test
           severity-threshold: high
