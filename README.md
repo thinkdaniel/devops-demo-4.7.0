@@ -51,6 +51,18 @@ java -jar target/devops-demo-0.0.1-SNAPSHOT.jar
 mvn test
 ```
 
+## Snyk scans in CircleCI
+
+Set `SNYK_TOKEN` to a Snyk API token in the CircleCI project's environment
+variables. Both Snyk jobs check that it is present without logging its value.
+
+The [pipeline](.circleci/config.yml) installs a pinned Snyk CLI release and
+verifies its SHA-256 checksum before running dependency and source-code scans.
+The CLI reads `SNYK_TOKEN` directly when scanning; no `snyk auth` command is
+needed in CI. This avoids the Snyk orb's explicit login and browser-based OAuth
+authentication, which cannot complete in CI. Both scans fail on high or critical
+findings and do not run `snyk monitor`.
+
 ## Working with tagged stages
 
 This repo uses tags (e.g. `step-1-project-template`, `step-2-example`, ...) to mark different stages of the app as it evolves. To see all available tags:
@@ -66,4 +78,3 @@ git checkout -b my-branch-name step-1-project-template
 ```
 
 This checks out the code exactly as it was at that tag and puts you on a new branch (`my-branch-name`) so you can make changes without affecting the tag or other branches.
-

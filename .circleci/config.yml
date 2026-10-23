@@ -1,7 +1,22 @@
 version: 2.1
 
-orbs:
-  snyk: snyk/snyk@2.3.0
+commands:
+  install_snyk:
+    steps:
+      - run:
+          name: Install Snyk CLI
+          environment:
+            SNYK_CLI_VERSION: 1.1308.1
+          command: |
+            set -euo pipefail
+            download_dir=$(mktemp -d)
+            trap 'rm -f "$download_dir/snyk-linux" "$download_dir/snyk-linux.sha256"; rmdir "$download_dir"' EXIT
+            cd "$download_dir"
+            base_url="https://downloads.snyk.io/cli/v${SNYK_CLI_VERSION}"
+            curl --fail --show-error --location --retry 6 --output snyk-linux "$base_url/snyk-linux"
+            curl --fail --show-error --location --retry 6 --output snyk-linux.sha256 "$base_url/snyk-linux.sha256"
+            sha256sum -c snyk-linux.sha256
+            sudo install -m 0755 snyk-linux /usr/local/bin/snyk
 
 jobs:
   # ==========================================
@@ -82,10 +97,10 @@ jobs:
               exit 1
             fi
             echo "SNYK_TOKEN is present."
-      - snyk/scan:
-          severity-threshold: high
-          cli-version: 1.1308.1
-          monitor-on-build: false
+      - install_snyk
+      - run:
+          name: Scan Maven dependencies with Snyk
+          command: snyk test --severity-threshold=high
 
   # ==========================================
   # SNYK_CODE JOB - Snyk Code: static analysis (SAST) of src/
@@ -102,12 +117,11 @@ jobs:
               echo "ERROR: SNYK_TOKEN is unset or empty in this job." >&2
               exit 1
             fi
-            echo "SNYK_TOKEN is present."      
-      - snyk/scan:
-          command: code test
-          severity-threshold: high
-          cli-version: 1.1308.1
-          monitor-on-build: false
+            echo "SNYK_TOKEN is present."
+      - install_snyk
+      - run:
+          name: Scan source code with Snyk Code
+          command: snyk code test --severity-threshold=high
 
   # ==========================================
   # PUBLISH JOB - Build and push Docker image
