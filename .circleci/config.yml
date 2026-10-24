@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  snyk: snyk/snyk@2.3.0
+
 commands:
   install_snyk:
     steps:
@@ -80,6 +83,30 @@ jobs:
   # ==========================================
   # SNYK_SCAN JOB - Snyk: scan Maven dependencies
   # ==========================================
+  # snyk_scan:
+  #   docker:
+  #     - image: cimg/openjdk:21.0
+  #   steps:
+  #     - checkout
+  #     - restore_cache:
+  #         keys:
+  #           - maven-deps-{{ checksum "pom.xml" }}
+  #           - maven-deps-
+  #     - run:
+  #         name: Verify Snyk token is available
+  #         command: |
+  #           if [ -z "${SNYK_TOKEN:-}" ]; then
+  #             echo "ERROR: SNYK_TOKEN is unset or empty in this job." >&2
+  #             exit 1
+  #           fi
+  #           echo "SNYK_TOKEN is present."
+  #     - install_snyk
+  #     - run:
+  #         name: Scan Maven dependencies with Snyk
+  #         command: snyk test --severity-threshold=high
+  # ==========================================
+  # SNYK_SCAN JOB - Snyk: scan Maven dependencies
+  # ==========================================
   snyk_scan:
     docker:
       - image: cimg/openjdk:21.0
@@ -89,18 +116,10 @@ jobs:
           keys:
             - maven-deps-{{ checksum "pom.xml" }}
             - maven-deps-
-      - run:
-          name: Verify Snyk token is available
-          command: |
-            if [ -z "${SNYK_TOKEN:-}" ]; then
-              echo "ERROR: SNYK_TOKEN is unset or empty in this job." >&2
-              exit 1
-            fi
-            echo "SNYK_TOKEN is present."
-      - install_snyk
-      - run:
-          name: Scan Maven dependencies with Snyk
-          command: snyk test --severity-threshold=high
+      - snyk/scan:
+          severity-threshold: high
+          cli-version: 1.1308.1
+          monitor-on-build: false
 
   # ==========================================
   # SNYK_CODE JOB - Snyk Code: static analysis (SAST) of src/
