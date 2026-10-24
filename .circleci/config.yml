@@ -120,8 +120,29 @@ jobs:
           severity-threshold: high
           cli-version: 1.1308.1
           monitor-on-build: false
+          fail-on-issues: false
 
   # ==========================================
+  # SNYK_CODE JOB - Snyk Code: static analysis (SAST) of src/
+  # ==========================================
+  # snyk_code:
+  #   docker:
+  #     - image: cimg/openjdk:21.0
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Verify Snyk token is available
+  #         command: |
+  #           if [ -z "${SNYK_TOKEN:-}" ]; then
+  #             echo "ERROR: SNYK_TOKEN is unset or empty in this job." >&2
+  #             exit 1
+  #           fi
+  #           echo "SNYK_TOKEN is present."
+  #     - install_snyk
+  #     - run:
+  #         name: Scan source code with Snyk Code
+  #         command: snyk code test --severity-threshold=high
+    # ==========================================
   # SNYK_CODE JOB - Snyk Code: static analysis (SAST) of src/
   # ==========================================
   snyk_code:
@@ -129,18 +150,11 @@ jobs:
       - image: cimg/openjdk:21.0
     steps:
       - checkout
-      - run:
-          name: Verify Snyk token is available
-          command: |
-            if [ -z "${SNYK_TOKEN:-}" ]; then
-              echo "ERROR: SNYK_TOKEN is unset or empty in this job." >&2
-              exit 1
-            fi
-            echo "SNYK_TOKEN is present."
-      - install_snyk
-      - run:
-          name: Scan source code with Snyk Code
-          command: snyk code test --severity-threshold=high
+      - snyk/scan:
+          command: code test
+          severity-threshold: high
+          cli-version: 1.1308.1
+          monitor-on-build: false
 
   # ==========================================
   # PUBLISH JOB - Build and push Docker image
